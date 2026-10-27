@@ -1,0 +1,32 @@
+local env = getgenv()
+if env.__ar2guard then return "already on, hits=" .. env.__ar2guard.hits end
+
+local F   = require(game:GetService("ReplicatedFirst"):WaitForChild("Framework", 60))
+local Net = F.Libraries.Network
+
+local G = { hits = 0, last = nil, block = {
+    ["Network Clock Step"]        = true,
+    ["Sorry Mate, Wrong Path :/"] = true,
+} }
+env.__ar2guard = G
+G.orig = { send = Net.Send, fetch = Net.Fetch }
+
+Net.Send = function(self, route, ...)
+    if G.block[route] then
+        G.hits += 1
+        G.last = tostring(route)
+        return
+    end
+    return G.orig.send(self, route, ...)
+end
+
+Net.Fetch = function(self, route, ...)
+    if G.block[route] then
+        G.hits += 1
+        return
+    end
+    return G.orig.fetch(self, route, ...)
+end
+
+print("BIPASED")
+return "armed"
